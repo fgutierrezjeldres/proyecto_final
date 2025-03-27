@@ -20,17 +20,23 @@ import com.talento_futuro.proyecto_final.mapper.AdminMapper;
 import com.talento_futuro.proyecto_final.entity.Admin;
 import com.talento_futuro.proyecto_final.service.IAdminService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/admins")
 @RequiredArgsConstructor
+@Tag(name = "Admins", description = "Endpoints para la gestión de admins")
 public class AdminController {
 
     private final IAdminService adminService;
     private final AdminMapper adminMapper;
     
     @PostMapping
+    @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
+    @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
     public ResponseEntity<AdminDTO> register(@RequestBody AdminDTO adminDTO) {
         AdminDTO savedAdminDTO = adminService.registerAdmin(adminDTO);
 
@@ -44,6 +50,9 @@ public class AdminController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener un admin por ID", description = "Devuelve la información de un administrador específico.")
+    @ApiResponse(responseCode = "200", description = "Compañía encontrada")
+    @ApiResponse(responseCode = "404", description = "Compañía no encontrada")
     public ResponseEntity<AdminDTO> getAdminById(@PathVariable Integer id) {
         Admin admin = adminService.findById(id);
         AdminDTO adminDTO = adminMapper.toDTO(admin);
@@ -60,6 +69,7 @@ public class AdminController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar un admin", description = "Modifica los datos de un administrador existente.")
     public ResponseEntity<AdminDTO> updateAdmin(@PathVariable Integer id, @RequestBody AdminDTO adminDTO) {
         Admin admin = adminMapper.toEntity(adminDTO);
         Admin updatedAdmin = adminService.update(admin, id);
@@ -78,6 +88,8 @@ public class AdminController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar un admin", description = "Elimina un administrador por su ID.")
+    @ApiResponse(responseCode = "204", description = "Admin eliminado exitosamente")
     public ResponseEntity<Void> deleteAdmin(@PathVariable Integer id) {
         adminService.delete(id);
         URI location = ServletUriComponentsBuilder
@@ -92,6 +104,7 @@ public class AdminController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar todos los admins", description = "Obtiene una lista de todos las administradores registrados.")
     public ResponseEntity<List<AdminDTO>> getAllAdmins() {
         List<Admin> admins = adminService.findAll();
         List<AdminDTO> adminDTOs = admins.stream()
