@@ -1,6 +1,5 @@
 package com.talento_futuro.proyecto_final.service.impl;
 
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -96,18 +95,14 @@ public class SensorDataServiceImpl extends CRUDServiceImpl<SensorData, Integer> 
         if (companyApiKey == null || companyApiKey.isBlank()) {
             throw new UnauthorizedException("company_api_key is required");
         }
-
         Company company = companyRepository.findByCompanyApiKey(companyApiKey)
                 .orElseThrow(() -> new UnauthorizedException("api_key not found: "  + companyApiKey));
-
         if (from == null || to == null) {
                     throw new IllegalArgumentException("Both 'from' and 'to' epoch are required");
         }
-
         if (sensorIds == null || sensorIds.isEmpty()) {
             throw new IllegalArgumentException("At least one sensor_id must be provided");
         }
-
         return sensorDataRepository.findSensorDataByFilters(company, from, to, sensorIds);
     }
 
