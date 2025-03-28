@@ -10,5 +10,6 @@ public interface ISensorDataService extends ICRUDService<SensorData, Integer>{
 
     List<SensorDataDTO>  registerSensorData(JsonNode jsonNode);
     boolean isValidSensorApiKey(String sensorApiKey);
+    List<SensorData> findFilteredData(String companyApiKey, Long from, Long to, List<Integer> sensorIds);
 
 }

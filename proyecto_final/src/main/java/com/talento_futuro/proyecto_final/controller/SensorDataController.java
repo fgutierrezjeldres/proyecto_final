@@ -1,9 +1,11 @@
 package com.talento_futuro.proyecto_final.controller;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,7 +13,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -101,7 +105,7 @@ public class SensorDataController {
                              .build();
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<SensorDataDTO>> getAllSensorData() {
         List<SensorData> sensorDataList = sensorDataService.findAll();
         List<SensorDataDTO> sensorDataDTOs = sensorDataList.stream()
@@ -119,4 +123,25 @@ public class SensorDataController {
                              .location(uri)
                              .body(sensorDataDTOs);
     }
+
+    @GetMapping
+    public ResponseEntity<List<SensorDataDTO>> getFilteredSensorData(
+            @RequestHeader(value = "company_api_key", required = false) String companyApiKeyHeader,
+            @RequestParam(value = "company_api_key", required = false) String companyApiKeyParam,
+            @RequestParam(value = "from") Long fromTimestamp,
+            @RequestParam(value = "to") Long toTimestamp,
+            @RequestParam(value = "sensor_id") List<Integer> sensorIds) {
+
+    String companyApiKey = (companyApiKeyHeader != null) ? companyApiKeyHeader : companyApiKeyParam;
+    if (companyApiKey == null || companyApiKey.isBlank()) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Collections.emptyList());
+    }
+
+    List<SensorData> sensorDataList = sensorDataService.findFilteredData(companyApiKey, fromTimestamp, toTimestamp, sensorIds);
+    List<SensorDataDTO> sensorDataDTOs = sensorDataList.stream()
+                                                        .map(sensorDataMapper::toDTO)
+                                                        .collect(Collectors.toList());
+        return ResponseEntity.ok(sensorDataDTOs);
+    }
+
 }

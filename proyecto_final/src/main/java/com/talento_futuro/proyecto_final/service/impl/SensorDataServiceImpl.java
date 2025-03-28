@@ -1,5 +1,6 @@
 package com.talento_futuro.proyecto_final.service.impl;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -10,10 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.talento_futuro.proyecto_final.dto.SensorDataDTO;
 import com.talento_futuro.proyecto_final.mapper.SensorDataMapper;
+import com.talento_futuro.proyecto_final.entity.Company;
 import com.talento_futuro.proyecto_final.entity.Sensor;
 import com.talento_futuro.proyecto_final.entity.SensorData;
 import com.talento_futuro.proyecto_final.exception.UnauthorizedException;
+import com.talento_futuro.proyecto_final.repository.ICompanyRepository;
 import com.talento_futuro.proyecto_final.repository.IGenericRepository;
+import com.talento_futuro.proyecto_final.repository.ISensorDataRepository;
 import com.talento_futuro.proyecto_final.repository.ISensorRepository;
 import com.talento_futuro.proyecto_final.service.ISensorDataService;
 
@@ -26,6 +30,8 @@ public class SensorDataServiceImpl extends CRUDServiceImpl<SensorData, Integer> 
     private final IGenericRepository<SensorData, Integer> repository;
     private final SensorDataMapper sensorDataMapper;
     private final ISensorRepository sensorRepository;
+    private final ICompanyRepository companyRepository;
+    private final ISensorDataRepository sensorDataRepository;
    
     @Override
     protected IGenericRepository<SensorData, Integer> getRepository() {
@@ -62,7 +68,7 @@ public class SensorDataServiceImpl extends CRUDServiceImpl<SensorData, Integer> 
         List<SensorDataDTO> sensorDataList = new ArrayList<>();
 
         Sensor sensor = sensorRepository.findBySensorApiKey(apiKey)
-        .orElseThrow(() -> new IllegalArgumentException("No se encontró ningún sensor con la API Key proporcionada: " + apiKey));
+        .orElseThrow(() -> new UnauthorizedException("No se encontró ningún sensor con la API Key proporcionada: " + apiKey));
 
         for (JsonNode node : jsonData) {
             Long receivedAt = node.path("datetime").asLong();
@@ -76,13 +82,33 @@ public class SensorDataServiceImpl extends CRUDServiceImpl<SensorData, Integer> 
                     sensorDataDTO.setMetric(fieldName);  
                     sensorDataDTO.setData(entry.getValue().asText()); 
                     sensorDataDTO.setSensorId(sensor.getId()); 
-                    System.out.println(sensorDataDTO.toString());  
                     sensorDataList.add(sensorDataDTO);
                 }
             });
         }
 
         return sensorDataList;
+    }
+
+    @Override
+    public List<SensorData> findFilteredData(String companyApiKey, Long from, Long to, List<Integer> sensorIds) {
+
+        if (companyApiKey == null || companyApiKey.isBlank()) {
+            throw new UnauthorizedException("company_api_key is required");
+        }
+
+        Company company = companyRepository.findByCompanyApiKey(companyApiKey)
+                .orElseThrow(() -> new UnauthorizedException("api_key not found: "  + companyApiKey));
+
+        if (from == null || to == null) {
+                    throw new IllegalArgumentException("Both 'from' and 'to' epoch are required");
+        }
+
+        if (sensorIds == null || sensorIds.isEmpty()) {
+            throw new IllegalArgumentException("At least one sensor_id must be provided");
+        }
+
+        return sensorDataRepository.findSensorDataByFilters(company, from, to, sensorIds);
     }
 
 }

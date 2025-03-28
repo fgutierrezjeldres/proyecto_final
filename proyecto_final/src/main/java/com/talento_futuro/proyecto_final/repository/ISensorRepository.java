@@ -9,5 +9,6 @@ public interface ISensorRepository extends IGenericRepository<Sensor, Integer>{
     boolean existsBySensorApiKey(String sensorApiKey);
     Optional<Sensor> findBySensorName(String sensorName);
     Optional<Sensor> findBySensorApiKey(String sensorApiKey);
+   
 
 }
