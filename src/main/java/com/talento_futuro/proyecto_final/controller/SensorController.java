@@ -30,7 +30,7 @@ public class SensorController {
     private final ISensorService sensorService;
     private final SensorMapper sensorMapper;
     
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<SensorDTO> register(@RequestBody SensorDTO sensorDTO) {
         SensorDTO savedSensorDTO = sensorService.registerSensor(sensorDTO);
 
@@ -89,7 +89,7 @@ public class SensorController {
                              .build();
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<SensorDTO>> getAllSensors() {
         List<Sensor> sensors = sensorService.findAll();
         List<SensorDTO> sensorDTOs = sensors.stream()

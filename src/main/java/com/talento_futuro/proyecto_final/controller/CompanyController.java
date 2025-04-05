@@ -31,7 +31,7 @@ public class CompanyController {
     private final ICompanyService companyService;
     private final CompanyMapper companyMapper;
     
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<CompanyDTO> register(@RequestBody CompanyDTO companyDTO) {
         CompanyDTO savedCompanyDTO = companyService.registerCompany(companyDTO);
 
@@ -92,7 +92,7 @@ public class CompanyController {
                              .build();
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<CompanyDTO>> getAllCompanies() {
         List<Company> companies = companyService.findAll();
         List<CompanyDTO> companyDTOs = companies.stream()

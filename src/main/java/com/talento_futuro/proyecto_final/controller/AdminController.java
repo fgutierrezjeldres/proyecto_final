@@ -34,7 +34,7 @@ public class AdminController {
     private final IAdminService adminService;
     private final AdminMapper adminMapper;
     
-    @PostMapping
+    @PostMapping("/register")
     @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
     @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
     public ResponseEntity<AdminDTO> register(@RequestBody AdminDTO adminDTO) {
@@ -103,7 +103,7 @@ public class AdminController {
                              .build();
     }
 
-    @GetMapping
+    @GetMapping("/all")
     @Operation(summary = "Listar todos los admins", description = "Obtiene una lista de todos las administradores registrados.")
     public ResponseEntity<List<AdminDTO>> getAllAdmins() {
         List<Admin> admins = adminService.findAll();

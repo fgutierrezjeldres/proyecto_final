@@ -2,7 +2,6 @@ package com.talento_futuro.proyecto_final.service.impl;
 
 import java.util.UUID;
 
-//import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,6 @@ public class SensorServiceImpl extends CRUDServiceImpl<Sensor, Integer> implemen
 
     private final ISensorRepository repository;
     private final SensorMapper sensorMapper;
-  //  private final PasswordEncoder encoder;
     private final ILocationRepository locationRepository;
 
     @Override

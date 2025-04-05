@@ -30,7 +30,7 @@ public class LocationController {
     private final ILocationService locationService;
     private final LocationMapper locationMapper;
     
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<LocationDTO> register(@RequestBody LocationDTO locationDTO) {
         LocationDTO savedLocationDTO = locationService.registerLocation(locationDTO);
 
@@ -86,7 +86,7 @@ public class LocationController {
                              .build();
     }
 
-    @GetMapping
+    @GetMapping("/all")
     public ResponseEntity<List<LocationDTO>> getAllLocations() {
         List<Location> locations = locationService.findAll();
         List<LocationDTO> locationDTOs = locations.stream()
