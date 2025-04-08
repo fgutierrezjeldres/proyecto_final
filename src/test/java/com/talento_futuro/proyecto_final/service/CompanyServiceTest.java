@@ -60,7 +60,7 @@ public class CompanyServiceTest {
 
         CompanyDTO result = companyService.registerCompany(companyDTO);
         assertNotNull(result);
-        assertEquals("My Company", result.getCompanyName());
+        assertEquals("test", result.getCompanyName());
         assertEquals(1, result.getAdminId());
     }
 
@@ -75,12 +75,12 @@ public class CompanyServiceTest {
 
         Company existingCompany = new Company();
         existingCompany.setId(1);
-        existingCompany.setCompanyApiKey("old-api-key");
+        existingCompany.setCompanyApiKey("d3ee2929-212b-4077-af84-694a0e69b8e1");
 
         Company updatedCompany = new Company();
         updatedCompany.setId(1);
         updatedCompany.setAdmin(admin);
-        updatedCompany.setCompanyApiKey("new-api-key");
+        updatedCompany.setCompanyApiKey("d3ee2929-212b-4077-af84-694a0e69b8e2");
 
         when(repository.findById(1)).thenReturn(Optional.of(existingCompany));
         when(adminRepository.findById(1)).thenReturn(Optional.of(admin));
@@ -90,7 +90,7 @@ public class CompanyServiceTest {
         Company result = companyService.updateCompany(companyDTO, 1);
 
         assertEquals(1, result.getId());
-        assertEquals("new-api-key", result.getCompanyApiKey());
+        assertEquals("d3ee2929-212b-4077-af84-694a0e69b8e2", result.getCompanyApiKey());
         assertEquals("admin", result.getAdmin().getUsername());
     }
 }
