@@ -20,88 +20,114 @@ import com.talento_futuro.proyecto_final.mapper.LocationMapper;
 import com.talento_futuro.proyecto_final.entity.Location;
 import com.talento_futuro.proyecto_final.service.ILocationService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/locations")
 @RequiredArgsConstructor
+@Tag(name = "Locations", description = "Endpoints para la gestión de ubicaciones")
 public class LocationController {
 
-    private final ILocationService locationService;
-    private final LocationMapper locationMapper;
-    
-    @PostMapping("/register")
-    public ResponseEntity<LocationDTO> register(@RequestBody LocationDTO locationDTO) {
-        LocationDTO savedLocationDTO = locationService.registerLocation(locationDTO);
+        private final ILocationService locationService;
+        private final LocationMapper locationMapper;
 
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "created")
-                            .buildAndExpand(savedLocationDTO.getId())    
-                            .toUri();
-        return ResponseEntity.created(location).body(savedLocationDTO);
-    }
+        @PostMapping
+        @Operation(summary = "Registrar una ubicación", description = "Crea una nueva ubicación en el sistema.")
+        @ApiResponse(responseCode = "201", description = "Ubicación creada exitosamente")
+        public ResponseEntity<LocationDTO> register(@RequestBody LocationDTO locationDTO) {
+                LocationDTO savedLocationDTO = locationService.registerLocation(locationDTO);
 
-    @GetMapping("/{id}")
-    public ResponseEntity<LocationDTO> getLocationById(@PathVariable Integer id) {
-        Location location = locationService.findById(id);
-        LocationDTO locationDTO = locationMapper.toDTO(location);
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "created")
+                                .buildAndExpand(savedLocationDTO.getId())
+                                .toUri();
+                return ResponseEntity.created(location).body(savedLocationDTO);
+        }
 
-        URI uri = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "fetched")
-                            .buildAndExpand(id)
-                            .toUri();
-        return ResponseEntity.ok()
-                             .location(uri)
-                             .body(locationDTO);
-    }
+        @GetMapping("/{id}")
+        @Operation(summary = "Obtener una ubicación por ID", description = "Devuelve la información de una ubicación específica.")
+        @ApiResponse(responseCode = "200", description = "Ubicación encontrada")
+        @ApiResponse(responseCode = "404", description = "Ubicación no encontrada")
+        public ResponseEntity<LocationDTO> getLocationById(@PathVariable Integer id) {
+                Location location = locationService.findById(id);
+                LocationDTO locationDTO = locationMapper.toDTO(location);
 
-    @PutMapping("/{id}")
-    public ResponseEntity<LocationDTO> updateLocation(@PathVariable Integer id, @RequestBody LocationDTO locationDTO) {
-        LocationDTO updatedLocationDTO = locationService.updateLocation(locationDTO, id);
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "updated")
-                            .buildAndExpand(id)
-                            .toUri();
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "fetched")
+                                .buildAndExpand(id)
+                                .toUri();
+                return ResponseEntity.ok()
+                                .location(uri)
+                                .body(locationDTO);
+        }
 
-        return ResponseEntity.ok().location(location).body(updatedLocationDTO);
-    }
+        @PutMapping("/{id}")
+        @Operation(summary = "Actualizar una ubicación", description = "Modifica los datos de una ubicación existente.")
+        @ApiResponse(responseCode = "200", description = "Ubicación actualizada exitosamente")
+        public ResponseEntity<LocationDTO> updateLocation(@PathVariable Integer id,
+                        @RequestBody LocationDTO locationDTO) {
+                LocationDTO updatedLocationDTO = locationService.updateLocation(locationDTO, id);
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "updated")
+                                .buildAndExpand(id)
+                                .toUri();
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteLocation(@PathVariable Integer id) {
-        locationService.delete(id);
-        URI uri = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "deleted")
-                            .buildAndExpand(id)
-                            .toUri();
-        return ResponseEntity.noContent()
-                             .location(uri)
-                             .build();
-    }
+                return ResponseEntity.ok().location(location).body(updatedLocationDTO);
+        }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<LocationDTO>> getAllLocations() {
-        List<Location> locations = locationService.findAll();
-        List<LocationDTO> locationDTOs = locations.stream()
-                                                  .map(locationMapper::toDTO)
-                                                  .collect(Collectors.toList());
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Eliminar una ubicación", description = "Elimina una ubicación por su ID.")
+        @ApiResponse(responseCode = "204", description = "Ubicación eliminada exitosamente")
+        public ResponseEntity<Void> deleteLocation(@PathVariable Integer id) {
+                locationService.delete(id);
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "deleted")
+                                .buildAndExpand(id)
+                                .toUri();
+                return ResponseEntity.noContent()
+                                .location(uri)
+                                .build();
+        }
 
-        URI uri = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/all")
-                            .queryParam("status", "fetched")
-                            .build()
-                            .toUri();
+        @GetMapping
+        @Operation(summary = "Listar todas las ubicaciones", description = "Obtiene una lista de todas las ubicaciones registradas.")
+        @ApiResponse(responseCode = "200", description = "Lista de ubicaciones obtenida exitosamente")
+        public ResponseEntity<CollectionModel<EntityModel<LocationDTO>>> getAllLocations() {
+                List<Location> locations = locationService.findAll();
+                List<EntityModel<LocationDTO>> locationResources = locations.stream()
+                                .map(location -> {
+                                        LocationDTO dto = locationMapper.toDTO(location);
+                                        EntityModel<LocationDTO> model = EntityModel.of(dto);
+                                        model.add(
+                                                        WebMvcLinkBuilder.linkTo(
+                                                                        WebMvcLinkBuilder.methodOn(
+                                                                                        LocationController.class)
+                                                                                        .getLocationById(dto.getId()))
+                                                                        .withSelfRel());
+                                        return model;
+                                })
+                                .collect(Collectors.toList());
 
-        return ResponseEntity.ok()
-                             .location(uri)
-                             .body(locationDTOs);
-    }
+                CollectionModel<EntityModel<LocationDTO>> collectionModel = CollectionModel.of(locationResources,
+                                WebMvcLinkBuilder.linkTo(
+                                                WebMvcLinkBuilder.methodOn(LocationController.class).getAllLocations())
+                                                .withSelfRel());
+
+                return ResponseEntity.ok(collectionModel);
+        }
 }

@@ -25,104 +25,110 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+
 @RestController
 @RequestMapping("/api/v1/admins")
 @RequiredArgsConstructor
 @Tag(name = "Admins", description = "Endpoints para la gestión de admins")
 public class AdminController {
 
-    private final IAdminService adminService;
-    private final AdminMapper adminMapper;
-    
-    @PostMapping("/register")
-    @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
-    @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
-    public ResponseEntity<AdminDTO> register(@RequestBody AdminDTO adminDTO) {
-        AdminDTO savedAdminDTO = adminService.registerAdmin(adminDTO);
+        private final IAdminService adminService;
+        private final AdminMapper adminMapper;
 
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "created")
-                            .buildAndExpand(savedAdminDTO.getId())    
-                            .toUri();
-        return ResponseEntity.created(location).body(savedAdminDTO);
-    }
+        @PostMapping
+        @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
+        @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
+        public ResponseEntity<AdminDTO> register(@RequestBody AdminDTO adminDTO) {
+                AdminDTO savedAdminDTO = adminService.registerAdmin(adminDTO);
 
-    @GetMapping("/{id}")
-    @Operation(summary = "Obtener un admin por ID", description = "Devuelve la información de un administrador específico.")
-    @ApiResponse(responseCode = "200", description = "Compañía encontrada")
-    @ApiResponse(responseCode = "404", description = "Compañía no encontrada")
-    public ResponseEntity<AdminDTO> getAdminById(@PathVariable Integer id) {
-        Admin admin = adminService.findById(id);
-        AdminDTO adminDTO = adminMapper.toDTO(admin);
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "created")
+                                .buildAndExpand(savedAdminDTO.getId())
+                                .toUri();
+                return ResponseEntity.created(location).body(savedAdminDTO);
+        }
 
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "fetched")
-                            .buildAndExpand(id)
-                            .toUri();
-        return ResponseEntity.ok()
-                             .location(location)
-                             .body(adminDTO);
-    }
+        @GetMapping("/{id}")
+        @Operation(summary = "Obtener un admin por ID", description = "Devuelve la información de un administrador específico.")
+        @ApiResponse(responseCode = "200", description = "Admin encontrado")
+        @ApiResponse(responseCode = "404", description = "Admin no encontrado")
+        public ResponseEntity<AdminDTO> getAdminById(@PathVariable Integer id) {
+                Admin admin = adminService.findById(id);
+                AdminDTO adminDTO = adminMapper.toDTO(admin);
 
-    @PutMapping("/{id}")
-    @Operation(summary = "Actualizar un admin", description = "Modifica los datos de un administrador existente.")
-    public ResponseEntity<AdminDTO> updateAdmin(@PathVariable Integer id, @RequestBody AdminDTO adminDTO) {
-        Admin admin = adminMapper.toEntity(adminDTO);
-        Admin updatedAdmin = adminService.update(admin, id);
-        AdminDTO updatedAdminDTO = adminMapper.toDTO(updatedAdmin);
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "fetched")
+                                .buildAndExpand(id)
+                                .toUri();
+                return ResponseEntity.ok()
+                                .location(location)
+                                .body(adminDTO);
+        }
 
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "updated")
-                            .buildAndExpand(id)
-                            .toUri();
+        @PutMapping("/{id}")
+        @Operation(summary = "Actualizar un admin", description = "Modifica los datos de un administrador existente.")
+        public ResponseEntity<AdminDTO> updateAdmin(@PathVariable Integer id, @RequestBody AdminDTO adminDTO) {
+                Admin admin = adminMapper.toEntity(adminDTO);
+                Admin updatedAdmin = adminService.update(admin, id);
+                AdminDTO updatedAdminDTO = adminMapper.toDTO(updatedAdmin);
 
-        return ResponseEntity.ok()
-                             .location(location)
-                             .body(updatedAdminDTO);
-    }
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "updated")
+                                .buildAndExpand(id)
+                                .toUri();
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Eliminar un admin", description = "Elimina un administrador por su ID.")
-    @ApiResponse(responseCode = "204", description = "Admin eliminado exitosamente")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable Integer id) {
-        adminService.delete(id);
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/{id}")
-                            .queryParam("status", "deleted")
-                            .buildAndExpand(id)
-                            .toUri();
-        return ResponseEntity.noContent()
-                             .location(location)
-                             .build();
-    }
+                return ResponseEntity.ok()
+                                .location(location)
+                                .body(updatedAdminDTO);
+        }
 
-    @GetMapping("/all")
-    @Operation(summary = "Listar todos los admins", description = "Obtiene una lista de todos las administradores registrados.")
-    public ResponseEntity<List<AdminDTO>> getAllAdmins() {
-        List<Admin> admins = adminService.findAll();
-        List<AdminDTO> adminDTOs = admins.stream()
-                                         .map(adminMapper::toDTO)
-                                         .collect(Collectors.toList());
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Eliminar un admin", description = "Elimina un administrador por su ID.")
+        @ApiResponse(responseCode = "204", description = "Admin eliminado exitosamente")
+        public ResponseEntity<Void> deleteAdmin(@PathVariable Integer id) {
+                adminService.delete(id);
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "deleted")
+                                .buildAndExpand(id)
+                                .toUri();
+                return ResponseEntity.noContent()
+                                .location(location)
+                                .build();
+        }
 
-        URI location = ServletUriComponentsBuilder
-                            .fromCurrentRequest()
-                            .path("/all")
-                            .queryParam("status", "fetched")
-                            .build()
-                            .toUri();
+        @GetMapping
+        @Operation(summary = "Listar todos los admins", description = "Obtiene una lista de todos las administradores registrados.")
+        public ResponseEntity<CollectionModel<EntityModel<AdminDTO>>> getAllAdmins() {
+                List<Admin> admins = adminService.findAll();
 
-        return ResponseEntity.ok()
-                             .location(location)
-                             .body(adminDTOs);
-    }
+                List<EntityModel<AdminDTO>> adminResources = admins.stream()
+                                .map(admin -> {
+                                        AdminDTO dto = adminMapper.toDTO(admin);
+                                        EntityModel<AdminDTO> model = EntityModel.of(dto);
+                                        model.add(WebMvcLinkBuilder.linkTo(
+                                                        WebMvcLinkBuilder.methodOn(AdminController.class)
+                                                                        .getAdminById(dto.getId()))
+                                                        .withSelfRel());
+                                        return model;
+                                })
+                                .collect(Collectors.toList());
+
+                CollectionModel<EntityModel<AdminDTO>> collectionModel = CollectionModel.of(adminResources,
+                                WebMvcLinkBuilder.linkTo(
+                                                WebMvcLinkBuilder.methodOn(AdminController.class).getAllAdmins())
+                                                .withSelfRel());
+
+                return ResponseEntity.ok(collectionModel);
+        }
 }
-
-
-

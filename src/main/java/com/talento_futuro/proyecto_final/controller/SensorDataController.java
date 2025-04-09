@@ -1,118 +1,195 @@
 package com.talento_futuro.proyecto_final.controller;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.talento_futuro.proyecto_final.dto.SensorDataDTO;
 import com.talento_futuro.proyecto_final.mapper.SensorDataMapper;
 import com.talento_futuro.proyecto_final.entity.SensorData;
 import com.talento_futuro.proyecto_final.service.ISensorDataService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/sensor_data")
 @RequiredArgsConstructor
+@Tag(name = "Sensor Data", description = "Endpoints para registrar, consultar y administrar datos de sensores")
 public class SensorDataController {
 
-    private final ISensorDataService sensorDataService;
-    private final SensorDataMapper sensorDataMapper;
+        private final ISensorDataService sensorDataService;
+        private final SensorDataMapper sensorDataMapper;
 
-    @PostMapping
-    public ResponseEntity<SensorDataDTO> insertSensorData(@RequestBody SensorDataDTO sensorDataDTO) {
-        SensorData savedSensorData = sensorDataService.save(sensorDataMapper.toEntity(sensorDataDTO));
-        SensorDataDTO savedSensorDataDTO = sensorDataMapper.toDTO(savedSensorData);
+        @PostMapping
+        @Operation(summary = "Insertar datos del sensor", description = "Recibe un JSON con múltiples registros de datos de sensores.")
+        @ApiResponse(responseCode = "201", description = "Datos insertados exitosamente")
+        public ResponseEntity<List<SensorDataDTO>> insertSensorData(@RequestBody JsonNode data) {
+                List<SensorDataDTO> savedSensorData = sensorDataService.registerSensorData(data);
+                String ids = savedSensorData.stream()
+                                .map(sensor -> String.valueOf(sensor.getId()))
+                                .collect(Collectors.joining(","));
 
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .queryParam("status", "created")
-                .buildAndExpand(savedSensorDataDTO.getId())
-                .toUri();
+                URI location = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "created")
+                                .buildAndExpand(ids)
+                                .toUri();
 
-        return ResponseEntity.created(location).body(savedSensorDataDTO);
-    }
+                return ResponseEntity.created(location).body(savedSensorData);
+        }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<SensorDataDTO> getSensorDataById(@PathVariable Integer id) {
-        SensorData sensorData = sensorDataService.findById(id);
-        SensorDataDTO sensorDataDTO = sensorDataMapper.toDTO(sensorData);
+        @GetMapping("/{id}")
+        @Operation(summary = "Obtener dato de sensor por ID", description = "Devuelve un único dato de sensor basado en su ID.")
+        @ApiResponse(responseCode = "200", description = "Dato encontrado exitosamente")
+        @ApiResponse(responseCode = "404", description = "Dato no encontrado")
+        public ResponseEntity<EntityModel<SensorDataDTO>> getSensorDataById(@PathVariable Integer id) {
+                SensorData sensorData = sensorDataService.findById(id);
+                SensorDataDTO sensorDataDTO = sensorDataMapper.toDTO(sensorData);
 
-        URI uri = ServletUriComponentsBuilder
-                
-                .fromCurrentRequest()
-                .path("/{id}")
-                .queryParam("status", "fetched")
-                .buildAndExpand(id)
-                .toUri();
+                EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
 
-        return ResponseEntity.ok()
-                             .location(uri)
-                             .body(sensorDataDTO);
-    }
+                entityModel.add(WebMvcLinkBuilder
+                                .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class).getSensorDataById(id))
+                                .withSelfRel());
 
-    @PutMapping("/{id}")
-    public ResponseEntity<SensorDataDTO> updateSensorData(@PathVariable Integer id, @RequestBody SensorDataDTO sensorDataDTO) {
-        SensorData sensorData = sensorDataMapper.toEntity(sensorDataDTO);
-        SensorData updatedSensorData = sensorDataService.update(sensorData, id);
-        SensorDataDTO updatedSensorDataDTO = sensorDataMapper.toDTO(updatedSensorData);
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "fetched")
+                                .buildAndExpand(id)
+                                .toUri();
 
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .queryParam("status", "updated")
-                .buildAndExpand(id)
-                .toUri();
+                return ResponseEntity.ok().location(uri).body(entityModel);
+        }
 
-        return ResponseEntity.ok()
-                             .location(uri)
-                             .body(updatedSensorDataDTO);
-    }
+        @PutMapping("/{id}")
+        @Operation(summary = "Actualizar dato del sensor", description = "Modifica un dato del sensor por ID.")
+        @ApiResponse(responseCode = "200", description = "Dato actualizado exitosamente")
+        public ResponseEntity<SensorDataDTO> updateSensorData(@PathVariable Integer id,
+                        @RequestBody SensorDataDTO sensorDataDTO) {
+                SensorData sensorData = sensorDataMapper.toEntity(sensorDataDTO);
+                SensorData updatedSensorData = sensorDataService.update(sensorData, id);
+                SensorDataDTO updatedSensorDataDTO = sensorDataMapper.toDTO(updatedSensorData);
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteSensorData(@PathVariable Integer id) {
-        sensorDataService.delete(id);
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/{id}")
-                .queryParam("status", "deleted")
-                .buildAndExpand(id)
-                .toUri();
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "updated")
+                                .buildAndExpand(id)
+                                .toUri();
 
-        return ResponseEntity.noContent()
-                             .location(uri)
-                             .build();
-    }
+                return ResponseEntity.ok()
+                                .location(uri)
+                                .body(updatedSensorDataDTO);
+        }
 
-    @GetMapping("/all")
-    public ResponseEntity<List<SensorDataDTO>> getAllSensorData() {
-        List<SensorData> sensorDataList = sensorDataService.findAll();
-        List<SensorDataDTO> sensorDataDTOs = sensorDataList.stream()
-                                                           .map(sensorDataMapper::toDTO)
-                                                           .collect(Collectors.toList());
+        @DeleteMapping("/{id}")
+        @Operation(summary = "Eliminar dato del sensor", description = "Elimina un dato específico del sensor.")
+        @ApiResponse(responseCode = "204", description = "Dato eliminado exitosamente")
+        public ResponseEntity<Void> deleteSensorData(@PathVariable Integer id) {
+                sensorDataService.delete(id);
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/{id}")
+                                .queryParam("status", "deleted")
+                                .buildAndExpand(id)
+                                .toUri();
 
-        URI uri = ServletUriComponentsBuilder
-                .fromCurrentRequest()
-                .path("/all")
-                .queryParam("status", "fetched")
-                .build()
-                .toUri();
+                return ResponseEntity.noContent()
+                                .location(uri)
+                                .build();
+        }
 
-        return ResponseEntity.ok()
-                             .location(uri)
-                             .body(sensorDataDTOs);
-    }
+        @GetMapping("/all")
+        @Operation(summary = "Listar todos los datos de sensores", description = "Obtiene todos los registros de datos almacenados.")
+        @ApiResponse(responseCode = "200", description = "Datos obtenidos exitosamente")
+        public ResponseEntity<CollectionModel<EntityModel<SensorDataDTO>>> getAllSensorData() {
+                List<SensorData> sensorDataList = sensorDataService.findAll();
+                List<EntityModel<SensorDataDTO>> sensorDataDTOsWithLinks = sensorDataList.stream()
+                                .map(sensorData -> {
+                                        SensorDataDTO sensorDataDTO = sensorDataMapper.toDTO(sensorData);
+                                        EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
+                                        entityModel.add(WebMvcLinkBuilder
+                                                        .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class)
+                                                                        .getSensorDataById(sensorDataDTO.getId()))
+                                                        .withSelfRel());
+
+                                        return entityModel;
+                                })
+                                .collect(Collectors.toList());
+                CollectionModel<EntityModel<SensorDataDTO>> collectionModel = CollectionModel
+                                .of(sensorDataDTOsWithLinks);
+                collectionModel.add(WebMvcLinkBuilder
+                                .linkTo(SensorDataController.class)
+                                .withSelfRel());
+
+                URI uri = ServletUriComponentsBuilder
+                                .fromCurrentRequest()
+                                .path("/all")
+                                .queryParam("status", "fetched")
+                                .build()
+                                .toUri();
+
+                return ResponseEntity.ok()
+                                .location(uri)
+                                .body(collectionModel);
+        }
+
+        @GetMapping
+        @Operation(summary = "Filtrar datos de sensores", description = "Filtra los datos por rango de tiempo y lista de sensores. La API key de la compañía puede enviarse por header o query param.")
+        @ApiResponse(responseCode = "200", description = "Datos filtrados correctamente")
+        @ApiResponse(responseCode = "401", description = "API Key no proporcionada")
+        public ResponseEntity<CollectionModel<EntityModel<SensorDataDTO>>> getFilteredSensorData(
+                        @RequestHeader(value = "company_api_key", required = false) @Parameter(description = "API Key de la compañía (en header o query param)") String companyApiKeyHeader,
+                        @RequestParam(value = "company_api_key", required = false) String companyApiKeyParam,
+                        @RequestParam(value = "from") @Parameter(description = "Timestamp inicial en formato epoch") Long fromTimestamp,
+                        @RequestParam(value = "to") @Parameter(description = "Timestamp final en formato epoch") Long toTimestamp,
+                        @RequestParam(value = "sensor_id") @Parameter(description = "Lista de IDs de sensores") List<Integer> sensorIds) {
+
+                String companyApiKey = (companyApiKeyHeader != null) ? companyApiKeyHeader : companyApiKeyParam;
+                if (companyApiKey == null || companyApiKey.isBlank()) {
+                        CollectionModel<EntityModel<SensorDataDTO>> emptyCollection = CollectionModel
+                                        .of(Collections.emptyList());
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(emptyCollection);
+                }
+
+                List<SensorData> sensorDataList = sensorDataService.findFilteredData(companyApiKey, fromTimestamp,
+                                toTimestamp, sensorIds);
+                List<SensorDataDTO> sensorDataDTOs = sensorDataList.stream()
+                                .map(sensorDataMapper::toDTO)
+                                .collect(Collectors.toList());
+
+                List<EntityModel<SensorDataDTO>> entityModels = sensorDataDTOs.stream()
+                                .map(sensorDataDTO -> {
+                                        EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
+                                        entityModel.add(WebMvcLinkBuilder
+                                                        .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class)
+                                                                        .getSensorDataById(sensorDataDTO.getId()
+                                                                                        .intValue()))
+                                                        .withSelfRel());
+                                        return entityModel;
+                                })
+                                .collect(Collectors.toList());
+                CollectionModel<EntityModel<SensorDataDTO>> collectionModel = CollectionModel.of(entityModels);
+                collectionModel.add(WebMvcLinkBuilder.linkTo(SensorDataController.class).withSelfRel());
+
+                return ResponseEntity.ok(collectionModel);
+        }
 }
