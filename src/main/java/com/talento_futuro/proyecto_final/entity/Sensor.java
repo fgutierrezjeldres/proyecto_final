@@ -3,9 +3,6 @@ package com.talento_futuro.proyecto_final.entity;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.talento_futuro.proyecto_final.enums.CommunicationProtocol;
-import com.talento_futuro.proyecto_final.enums.StatusSensor;
-
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -53,14 +50,11 @@ public class Sensor {
 	@Column(name = "ultima_conexion")
 	private String lastOnline ;
 
-	@Enumerated(EnumType.STRING)
 	@Column(name = "status", nullable = false)
-	private StatusSensor status;
+	private String status;
 
-	
-	@Enumerated(EnumType.STRING)
     @Column(name = "protocolo", nullable = false)
-    private CommunicationProtocol communicationProtocol;
+    private String communicationProtocol;
 
 	@ManyToOne
     @JoinColumn(name = "location_id", nullable = false)
