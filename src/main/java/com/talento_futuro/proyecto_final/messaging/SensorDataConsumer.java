@@ -23,6 +23,7 @@ public class SensorDataConsumer {
     public void listen(String message) {
         try {
             JsonNode jsonNode = objectMapper.readTree(message);
+            System.out.println(" datos kafka: " + jsonNode.toString());
             List<SensorDataDTO> savedData = sensorDataService.registerSensorData(jsonNode);
             System.out.println(" Datos guardados correctamente: " + savedData);
         } catch (Exception e) {
