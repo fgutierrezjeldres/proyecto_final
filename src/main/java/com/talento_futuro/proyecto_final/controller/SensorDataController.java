@@ -98,6 +98,7 @@ public class SensorDataController {
                 return ResponseEntity.noContent().build();
         }
 
+        @GetMapping
         @Operation(summary = "Listar todos los datos de sensores", description = "Obtiene todos los registros de datos almacenados.")
         @ApiResponse(responseCode = "200", description = "Datos obtenidos exitosamente")
         public ResponseEntity<CollectionModel<EntityModel<SensorDataDTO>>> getAllSensorData() {
