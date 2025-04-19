@@ -23,7 +23,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
@@ -64,7 +64,7 @@ public class SensorDataController {
         @Operation(summary = "Obtener dato de sensor por ID", description = "Devuelve un único dato de sensor basado en su ID.")
         @ApiResponse(responseCode = "200", description = "Dato encontrado exitosamente")
         @ApiResponse(responseCode = "404", description = "Dato no encontrado")
-        public ResponseEntity<EntityModel<SensorDataDTO>> getSensorDataById(@PathVariable Integer id) {
+        public ResponseEntity<EntityModel<SensorDataDTO>> getSensorDataById(@Valid @PathVariable Integer id) {
                 SensorData sensorData = sensorDataService.findById(id);
                 SensorDataDTO dto = sensorDataMapper.toDTO(sensorData);
 

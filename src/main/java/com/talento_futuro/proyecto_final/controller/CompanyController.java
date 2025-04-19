@@ -22,6 +22,7 @@ import com.talento_futuro.proyecto_final.service.ICompanyService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
@@ -41,7 +42,7 @@ public class CompanyController {
         @PostMapping
         @Operation(summary = "Registrar una compañía", description = "Crea una nueva compañía en el sistema.")
         @ApiResponse(responseCode = "201", description = "Compañía creada exitosamente")
-        public ResponseEntity<EntityModel<CompanyDTO>> register(@RequestBody CompanyDTO companyDTO) {
+        public ResponseEntity<EntityModel<CompanyDTO>> register(@Valid @RequestBody CompanyDTO companyDTO) {
                 CompanyDTO savedCompanyDTO = companyService.registerCompany(companyDTO);
 
                 EntityModel<CompanyDTO> resource = EntityModel.of(savedCompanyDTO,

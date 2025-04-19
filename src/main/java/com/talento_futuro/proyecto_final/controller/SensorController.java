@@ -25,6 +25,8 @@ import com.talento_futuro.proyecto_final.service.ISensorService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import lombok.RequiredArgsConstructor;
@@ -41,7 +43,7 @@ public class SensorController {
         @PostMapping
         @Operation(summary = "Registrar un sensor", description = "Crea un nuevo sensor en el sistema.")
         @ApiResponse(responseCode = "201", description = "Sensor creado exitosamente")
-        public ResponseEntity<EntityModel<SensorDTO>> register(@RequestBody SensorDTO sensorDTO) {
+        public ResponseEntity<EntityModel<SensorDTO>> register(@Valid @RequestBody SensorDTO sensorDTO) {
             SensorDTO savedSensorDTO = sensorService.registerSensor(sensorDTO);
     
             EntityModel<SensorDTO> resource = EntityModel.of(savedSensorDTO,

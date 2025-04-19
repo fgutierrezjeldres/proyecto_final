@@ -22,6 +22,7 @@ import com.talento_futuro.proyecto_final.service.IAdminService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.hateoas.CollectionModel;
@@ -40,7 +41,7 @@ public class AdminController {
         @PostMapping
         @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
         @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
-        public ResponseEntity<EntityModel<AdminDTO>> register(@RequestBody AdminDTO adminDTO) {
+        public ResponseEntity<EntityModel<AdminDTO>> register(@Valid @RequestBody AdminDTO adminDTO) {
                 AdminDTO savedAdminDTO = adminService.registerAdmin(adminDTO);
 
                 EntityModel<AdminDTO> resource = EntityModel.of(savedAdminDTO,

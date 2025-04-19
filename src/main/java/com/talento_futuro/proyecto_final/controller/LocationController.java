@@ -22,6 +22,8 @@ import com.talento_futuro.proyecto_final.service.ILocationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
@@ -40,7 +42,7 @@ public class LocationController {
         @PostMapping
         @Operation(summary = "Registrar una ubicación", description = "Crea una nueva ubicación en el sistema.")
         @ApiResponse(responseCode = "201", description = "Ubicación creada exitosamente")
-        public ResponseEntity<EntityModel<LocationDTO>> register(@RequestBody LocationDTO locationDTO) {
+        public ResponseEntity<EntityModel<LocationDTO>> register(@Valid @RequestBody LocationDTO locationDTO) {
                 LocationDTO savedLocationDTO = locationService.registerLocation(locationDTO);
 
                 EntityModel<LocationDTO> resource = EntityModel.of(savedLocationDTO,
