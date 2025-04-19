@@ -105,9 +105,7 @@ public class AdminController {
                                 .map(admin -> {
                                         AdminDTO dto = adminMapper.toDTO(admin);
                                         EntityModel<AdminDTO> model = EntityModel.of(dto);
-                                        model.add(linkTo(
-                                                        methodOn(AdminController.class)
-                                                                        .getAdminById(dto.getId()))
+                                        model.add(linkTo(methodOn(AdminController.class).getAdminById(dto.getId()))
                                                         .withSelfRel());
                                         return model;
                                 })

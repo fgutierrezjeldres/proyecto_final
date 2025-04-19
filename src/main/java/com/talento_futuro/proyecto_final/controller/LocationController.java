@@ -105,12 +105,7 @@ public class LocationController {
                                 .map(location -> {
                                         LocationDTO dto = locationMapper.toDTO(location);
                                         EntityModel<LocationDTO> model = EntityModel.of(dto);
-                                        model.add(
-                                                        linkTo(
-                                                                        methodOn(
-                                                                                        LocationController.class)
-                                                                                        .getLocationById(dto.getId()))
-                                                                        .withSelfRel());
+                                        model.add(linkTo(methodOn(LocationController.class).getLocationById(dto.getId())).withSelfRel());
                                         return model;
                                 })
                                 .collect(Collectors.toList());

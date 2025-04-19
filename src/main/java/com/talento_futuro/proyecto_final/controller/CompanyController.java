@@ -107,12 +107,8 @@ public class CompanyController {
                                 .map(company -> {
                                         CompanyDTO dto = companyMapper.toDTO(company);
                                         EntityModel<CompanyDTO> model = EntityModel.of(dto);
-                                        model.add(
-                                                        linkTo(
-                                                                        methodOn(
-                                                                                        CompanyController.class)
-                                                                                        .getCompanyById(dto.getId()))
-                                                                        .withSelfRel());
+                                        model.add(linkTo(methodOn(CompanyController.class).getCompanyById(dto.getId()))
+                                                        .withSelfRel());
                                         return model;
                                 })
                                 .collect(Collectors.toList());
