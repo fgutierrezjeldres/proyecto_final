@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.talento_futuro.proyecto_final.dto.LocationDTO;
 import com.talento_futuro.proyecto_final.mapper.LocationMapper;
@@ -25,7 +24,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -41,51 +40,50 @@ public class LocationController {
         @PostMapping
         @Operation(summary = "Registrar una ubicación", description = "Crea una nueva ubicación en el sistema.")
         @ApiResponse(responseCode = "201", description = "Ubicación creada exitosamente")
-        public ResponseEntity<LocationDTO> register(@RequestBody LocationDTO locationDTO) {
+        public ResponseEntity<EntityModel<LocationDTO>> register(@RequestBody LocationDTO locationDTO) {
                 LocationDTO savedLocationDTO = locationService.registerLocation(locationDTO);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "created")
-                                .buildAndExpand(savedLocationDTO.getId())
+                EntityModel<LocationDTO> resource = EntityModel.of(savedLocationDTO,
+                                linkTo(methodOn(LocationController.class).getLocationById(savedLocationDTO.getId()))
+                                                .withSelfRel(),
+                                linkTo(methodOn(LocationController.class).updateLocation(savedLocationDTO.getId(),
+                                                null)).withRel("update"),
+                                linkTo(methodOn(LocationController.class).deleteLocation(savedLocationDTO.getId()))
+                                                .withRel("delete"));
+
+                URI location = linkTo(methodOn(LocationController.class).getLocationById(savedLocationDTO.getId()))
                                 .toUri();
-                return ResponseEntity.created(location).body(savedLocationDTO);
+                return ResponseEntity.created(location).body(resource);
         }
 
         @GetMapping("/{id}")
         @Operation(summary = "Obtener una ubicación por ID", description = "Devuelve la información de una ubicación específica.")
         @ApiResponse(responseCode = "200", description = "Ubicación encontrada")
         @ApiResponse(responseCode = "404", description = "Ubicación no encontrada")
-        public ResponseEntity<LocationDTO> getLocationById(@PathVariable Integer id) {
+        public ResponseEntity<EntityModel<LocationDTO>> getLocationById(@PathVariable Integer id) {
                 Location location = locationService.findById(id);
                 LocationDTO locationDTO = locationMapper.toDTO(location);
 
-                URI uri = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "fetched")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.ok()
-                                .location(uri)
-                                .body(locationDTO);
+                EntityModel<LocationDTO> resource = EntityModel.of(locationDTO,
+                                linkTo(methodOn(LocationController.class).getLocationById(id)).withSelfRel(),
+                                linkTo(methodOn(LocationController.class).updateLocation(id, null)).withRel("update"),
+                                linkTo(methodOn(LocationController.class).deleteLocation(id)).withRel("delete"));
+
+                return ResponseEntity.ok(resource);
         }
 
         @PutMapping("/{id}")
         @Operation(summary = "Actualizar una ubicación", description = "Modifica los datos de una ubicación existente.")
         @ApiResponse(responseCode = "200", description = "Ubicación actualizada exitosamente")
-        public ResponseEntity<LocationDTO> updateLocation(@PathVariable Integer id,
+        public ResponseEntity<EntityModel<LocationDTO>> updateLocation(@PathVariable Integer id,
                         @RequestBody LocationDTO locationDTO) {
                 LocationDTO updatedLocationDTO = locationService.updateLocation(locationDTO, id);
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "updated")
-                                .buildAndExpand(id)
-                                .toUri();
 
-                return ResponseEntity.ok().location(location).body(updatedLocationDTO);
+                EntityModel<LocationDTO> resource = EntityModel.of(updatedLocationDTO,
+                                linkTo(methodOn(LocationController.class).getLocationById(id)).withSelfRel(),
+                                linkTo(methodOn(LocationController.class).deleteLocation(id)).withRel("delete"));
+
+                return ResponseEntity.ok(resource);
         }
 
         @DeleteMapping("/{id}")
@@ -93,15 +91,7 @@ public class LocationController {
         @ApiResponse(responseCode = "204", description = "Ubicación eliminada exitosamente")
         public ResponseEntity<Void> deleteLocation(@PathVariable Integer id) {
                 locationService.delete(id);
-                URI uri = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "deleted")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.noContent()
-                                .location(uri)
-                                .build();
+                return ResponseEntity.noContent().build();
         }
 
         @GetMapping
@@ -114,8 +104,8 @@ public class LocationController {
                                         LocationDTO dto = locationMapper.toDTO(location);
                                         EntityModel<LocationDTO> model = EntityModel.of(dto);
                                         model.add(
-                                                        WebMvcLinkBuilder.linkTo(
-                                                                        WebMvcLinkBuilder.methodOn(
+                                                        linkTo(
+                                                                        methodOn(
                                                                                         LocationController.class)
                                                                                         .getLocationById(dto.getId()))
                                                                         .withSelfRel());
@@ -124,8 +114,8 @@ public class LocationController {
                                 .collect(Collectors.toList());
 
                 CollectionModel<EntityModel<LocationDTO>> collectionModel = CollectionModel.of(locationResources,
-                                WebMvcLinkBuilder.linkTo(
-                                                WebMvcLinkBuilder.methodOn(LocationController.class).getAllLocations())
+                                linkTo(
+                                                methodOn(LocationController.class).getAllLocations())
                                                 .withSelfRel());
 
                 return ResponseEntity.ok(collectionModel);

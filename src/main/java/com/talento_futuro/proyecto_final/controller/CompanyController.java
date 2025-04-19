@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.talento_futuro.proyecto_final.dto.CompanyDTO;
 import com.talento_futuro.proyecto_final.mapper.CompanyMapper;
@@ -26,7 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -42,54 +41,52 @@ public class CompanyController {
         @PostMapping
         @Operation(summary = "Registrar una compañía", description = "Crea una nueva compañía en el sistema.")
         @ApiResponse(responseCode = "201", description = "Compañía creada exitosamente")
-        public ResponseEntity<CompanyDTO> register(@RequestBody CompanyDTO companyDTO) {
+        public ResponseEntity<EntityModel<CompanyDTO>> register(@RequestBody CompanyDTO companyDTO) {
                 CompanyDTO savedCompanyDTO = companyService.registerCompany(companyDTO);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "created")
-                                .buildAndExpand(savedCompanyDTO.getId())
+                EntityModel<CompanyDTO> resource = EntityModel.of(savedCompanyDTO,
+                                linkTo(methodOn(CompanyController.class).getCompanyById(savedCompanyDTO.getId()))
+                                                .withSelfRel(),
+                                linkTo(methodOn(CompanyController.class).updateCompany(savedCompanyDTO.getId(), null))
+                                                .withRel("update"),
+                                linkTo(methodOn(CompanyController.class).deleteCompany(savedCompanyDTO.getId()))
+                                                .withRel("delete"));
+
+                URI location = linkTo(methodOn(CompanyController.class).getCompanyById(savedCompanyDTO.getId()))
                                 .toUri();
-                return ResponseEntity.created(location).body(savedCompanyDTO);
+
+                return ResponseEntity.created(location).body(resource);
         }
 
         @GetMapping("/{id}")
         @Operation(summary = "Obtener una compañía por ID", description = "Devuelve la información de una compañía específica.")
         @ApiResponse(responseCode = "200", description = "Compañía encontrada")
         @ApiResponse(responseCode = "404", description = "Compañía no encontrada")
-        public ResponseEntity<CompanyDTO> getCompanyById(@PathVariable Integer id) {
+        public ResponseEntity<EntityModel<CompanyDTO>> getCompanyById(@PathVariable Integer id) {
                 Company company = companyService.findById(id);
                 CompanyDTO companyDTO = companyMapper.toDTO(company);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "fetched")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.ok()
-                                .location(location)
-                                .body(companyDTO);
+                EntityModel<CompanyDTO> resource = EntityModel.of(companyDTO,
+                                linkTo(methodOn(CompanyController.class).getCompanyById(id)).withSelfRel(),
+                                linkTo(methodOn(CompanyController.class).updateCompany(id, null)).withRel("update"),
+                                linkTo(methodOn(CompanyController.class).deleteCompany(id)).withRel("delete"));
+
+                return ResponseEntity.ok(resource);
         }
 
         @PutMapping("/{id}")
         @Operation(summary = "Actualizar una compañía", description = "Modifica los datos de una compañía existente.")
         @ApiResponse(responseCode = "200", description = "Compañía actualizada exitosamente")
-        public ResponseEntity<CompanyDTO> updateCompany(@PathVariable Integer id, @RequestBody CompanyDTO companyDTO) {
+        public ResponseEntity<EntityModel<CompanyDTO>> updateCompany(@PathVariable Integer id,
+                        @RequestBody CompanyDTO companyDTO) {
                 Company updatedCompany = companyService.updateCompany(companyDTO, id);
                 CompanyDTO updatedCompanyDTO = companyMapper.toDTO(updatedCompany);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "updated")
-                                .buildAndExpand(id)
-                                .toUri();
+                EntityModel<CompanyDTO> resource = EntityModel.of(updatedCompanyDTO,
+                                linkTo(methodOn(CompanyController.class).getCompanyById(id)).withSelfRel(),
+                                linkTo(methodOn(CompanyController.class).deleteCompany(id)).withRel("delete"));
 
-                return ResponseEntity.ok()
-                                .location(location)
-                                .body(updatedCompanyDTO);
+                return ResponseEntity.ok(resource);
         }
 
         @DeleteMapping("/{id}")
@@ -97,15 +94,7 @@ public class CompanyController {
         @ApiResponse(responseCode = "204", description = "Compañía eliminada exitosamente")
         public ResponseEntity<Void> deleteCompany(@PathVariable Integer id) {
                 companyService.delete(id);
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "deleted")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.noContent()
-                                .location(location)
-                                .build();
+                return ResponseEntity.noContent().build();
         }
 
         @GetMapping
@@ -118,8 +107,8 @@ public class CompanyController {
                                         CompanyDTO dto = companyMapper.toDTO(company);
                                         EntityModel<CompanyDTO> model = EntityModel.of(dto);
                                         model.add(
-                                                        WebMvcLinkBuilder.linkTo(
-                                                                        WebMvcLinkBuilder.methodOn(
+                                                        linkTo(
+                                                                        methodOn(
                                                                                         CompanyController.class)
                                                                                         .getCompanyById(dto.getId()))
                                                                         .withSelfRel());
@@ -128,8 +117,8 @@ public class CompanyController {
                                 .collect(Collectors.toList());
 
                 CollectionModel<EntityModel<CompanyDTO>> collectionModel = CollectionModel.of(companyResources,
-                                WebMvcLinkBuilder.linkTo(
-                                                WebMvcLinkBuilder.methodOn(CompanyController.class).getAllCompanies())
+                                linkTo(
+                                                methodOn(CompanyController.class).getAllCompanies())
                                                 .withSelfRel());
 
                 return ResponseEntity.ok(collectionModel);

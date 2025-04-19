@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,6 +25,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
 import lombok.RequiredArgsConstructor;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/api/v1/sensor_data")
@@ -39,20 +39,25 @@ public class SensorDataController {
         @PostMapping
         @Operation(summary = "Insertar datos del sensor", description = "Recibe un JSON con múltiples registros de datos de sensores.")
         @ApiResponse(responseCode = "201", description = "Datos insertados exitosamente")
-        public ResponseEntity<List<SensorDataDTO>> insertSensorData(@RequestBody JsonNode data) {
+        public ResponseEntity<CollectionModel<EntityModel<SensorDataDTO>>> insertSensorData(
+                        @RequestBody JsonNode data) {
                 List<SensorDataDTO> savedSensorData = sensorDataService.registerSensorData(data);
-                String ids = savedSensorData.stream()
-                                .map(sensor -> String.valueOf(sensor.getId()))
-                                .collect(Collectors.joining(","));
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "created")
-                                .buildAndExpand(ids)
+                List<EntityModel<SensorDataDTO>> resources = savedSensorData.stream()
+                                .map(dto -> EntityModel.of(dto,
+                                                linkTo(methodOn(SensorDataController.class)
+                                                                .getSensorDataById(dto.getId())).withSelfRel(),
+                                                linkTo(methodOn(SensorDataController.class)
+                                                                .updateSensorData(dto.getId(), null)).withRel("update"),
+                                                linkTo(methodOn(SensorDataController.class)
+                                                                .deleteSensorData(dto.getId())).withRel("delete")))
+                                .collect(Collectors.toList());
+
+                URI location = linkTo(
+                                methodOn(SensorDataController.class).getSensorDataById(savedSensorData.get(0).getId()))
                                 .toUri();
 
-                return ResponseEntity.created(location).body(savedSensorData);
+                return ResponseEntity.created(location).body(CollectionModel.of(resources));
         }
 
         @GetMapping("/{id}")
@@ -61,43 +66,30 @@ public class SensorDataController {
         @ApiResponse(responseCode = "404", description = "Dato no encontrado")
         public ResponseEntity<EntityModel<SensorDataDTO>> getSensorDataById(@PathVariable Integer id) {
                 SensorData sensorData = sensorDataService.findById(id);
-                SensorDataDTO sensorDataDTO = sensorDataMapper.toDTO(sensorData);
+                SensorDataDTO dto = sensorDataMapper.toDTO(sensorData);
 
-                EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
+                EntityModel<SensorDataDTO> resource = EntityModel.of(dto,
+                                linkTo(methodOn(SensorDataController.class).getSensorDataById(id)).withSelfRel(),
+                                linkTo(methodOn(SensorDataController.class).updateSensorData(id, null))
+                                                .withRel("update"),
+                                linkTo(methodOn(SensorDataController.class).deleteSensorData(id)).withRel("delete"));
 
-                entityModel.add(WebMvcLinkBuilder
-                                .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class).getSensorDataById(id))
-                                .withSelfRel());
-
-                URI uri = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "fetched")
-                                .buildAndExpand(id)
-                                .toUri();
-
-                return ResponseEntity.ok().location(uri).body(entityModel);
+                return ResponseEntity.ok(resource);
         }
 
         @PutMapping("/{id}")
         @Operation(summary = "Actualizar dato del sensor", description = "Modifica un dato del sensor por ID.")
         @ApiResponse(responseCode = "200", description = "Dato actualizado exitosamente")
-        public ResponseEntity<SensorDataDTO> updateSensorData(@PathVariable Integer id,
-                        @RequestBody SensorDataDTO sensorDataDTO) {
-                SensorData sensorData = sensorDataMapper.toEntity(sensorDataDTO);
-                SensorData updatedSensorData = sensorDataService.update(sensorData, id);
-                SensorDataDTO updatedSensorDataDTO = sensorDataMapper.toDTO(updatedSensorData);
+        public ResponseEntity<EntityModel<SensorDataDTO>> updateSensorData(@PathVariable Integer id,
+                        @RequestBody SensorDataDTO dto) {
+                SensorData updated = sensorDataService.update(sensorDataMapper.toEntity(dto), id);
+                SensorDataDTO updatedDTO = sensorDataMapper.toDTO(updated);
 
-                URI uri = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "updated")
-                                .buildAndExpand(id)
-                                .toUri();
+                EntityModel<SensorDataDTO> resource = EntityModel.of(updatedDTO,
+                                linkTo(methodOn(SensorDataController.class).getSensorDataById(id)).withSelfRel(),
+                                linkTo(methodOn(SensorDataController.class).deleteSensorData(id)).withRel("delete"));
 
-                return ResponseEntity.ok()
-                                .location(uri)
-                                .body(updatedSensorDataDTO);
+                return ResponseEntity.ok(resource);
         }
 
         @DeleteMapping("/{id}")
@@ -105,16 +97,7 @@ public class SensorDataController {
         @ApiResponse(responseCode = "204", description = "Dato eliminado exitosamente")
         public ResponseEntity<Void> deleteSensorData(@PathVariable Integer id) {
                 sensorDataService.delete(id);
-                URI uri = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "deleted")
-                                .buildAndExpand(id)
-                                .toUri();
-
-                return ResponseEntity.noContent()
-                                .location(uri)
-                                .build();
+                return ResponseEntity.noContent().build();
         }
 
         @GetMapping("/all")
@@ -126,8 +109,7 @@ public class SensorDataController {
                                 .map(sensorData -> {
                                         SensorDataDTO sensorDataDTO = sensorDataMapper.toDTO(sensorData);
                                         EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
-                                        entityModel.add(WebMvcLinkBuilder
-                                                        .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class)
+                                        entityModel.add(linkTo(methodOn(SensorDataController.class)
                                                                         .getSensorDataById(sensorDataDTO.getId()))
                                                         .withSelfRel());
 
@@ -136,8 +118,7 @@ public class SensorDataController {
                                 .collect(Collectors.toList());
                 CollectionModel<EntityModel<SensorDataDTO>> collectionModel = CollectionModel
                                 .of(sensorDataDTOsWithLinks);
-                collectionModel.add(WebMvcLinkBuilder
-                                .linkTo(SensorDataController.class)
+                collectionModel.add(linkTo(SensorDataController.class)
                                 .withSelfRel());
 
                 URI uri = ServletUriComponentsBuilder
@@ -179,8 +160,7 @@ public class SensorDataController {
                 List<EntityModel<SensorDataDTO>> entityModels = sensorDataDTOs.stream()
                                 .map(sensorDataDTO -> {
                                         EntityModel<SensorDataDTO> entityModel = EntityModel.of(sensorDataDTO);
-                                        entityModel.add(WebMvcLinkBuilder
-                                                        .linkTo(WebMvcLinkBuilder.methodOn(SensorDataController.class)
+                                        entityModel.add(linkTo(methodOn(SensorDataController.class)
                                                                         .getSensorDataById(sensorDataDTO.getId()
                                                                                         .intValue()))
                                                         .withSelfRel());
@@ -188,7 +168,7 @@ public class SensorDataController {
                                 })
                                 .collect(Collectors.toList());
                 CollectionModel<EntityModel<SensorDataDTO>> collectionModel = CollectionModel.of(entityModels);
-                collectionModel.add(WebMvcLinkBuilder.linkTo(SensorDataController.class).withSelfRel());
+                collectionModel.add(linkTo(SensorDataController.class).withSelfRel());
 
                 return ResponseEntity.ok(collectionModel);
         }

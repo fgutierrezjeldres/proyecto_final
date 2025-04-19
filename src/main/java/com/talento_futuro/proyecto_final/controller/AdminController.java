@@ -13,7 +13,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.talento_futuro.proyecto_final.dto.AdminDTO;
 import com.talento_futuro.proyecto_final.mapper.AdminMapper;
@@ -27,7 +26,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 @RequestMapping("/api/v1/admins")
@@ -41,54 +40,51 @@ public class AdminController {
         @PostMapping
         @Operation(summary = "Registrar un admin", description = "Crea un nuevo administrador en el sistema.")
         @ApiResponse(responseCode = "201", description = "admin creado exitosamente")
-        public ResponseEntity<AdminDTO> register(@RequestBody AdminDTO adminDTO) {
+        public ResponseEntity<EntityModel<AdminDTO>> register(@RequestBody AdminDTO adminDTO) {
                 AdminDTO savedAdminDTO = adminService.registerAdmin(adminDTO);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "created")
-                                .buildAndExpand(savedAdminDTO.getId())
-                                .toUri();
-                return ResponseEntity.created(location).body(savedAdminDTO);
+                EntityModel<AdminDTO> resource = EntityModel.of(savedAdminDTO,
+                                linkTo(methodOn(AdminController.class).getAdminById(savedAdminDTO.getId()))
+                                                .withSelfRel(),
+                                linkTo(methodOn(AdminController.class).updateAdmin(savedAdminDTO.getId(), null))
+                                                .withRel("update"),
+                                linkTo(methodOn(AdminController.class).deleteAdmin(savedAdminDTO.getId()))
+                                                .withRel("delete"));
+
+                URI location = linkTo(methodOn(AdminController.class).getAdminById(savedAdminDTO.getId())).toUri();
+
+                return ResponseEntity.created(location).body(resource);
         }
 
         @GetMapping("/{id}")
         @Operation(summary = "Obtener un admin por ID", description = "Devuelve la información de un administrador específico.")
         @ApiResponse(responseCode = "200", description = "Admin encontrado")
         @ApiResponse(responseCode = "404", description = "Admin no encontrado")
-        public ResponseEntity<AdminDTO> getAdminById(@PathVariable Integer id) {
+        public ResponseEntity<EntityModel<AdminDTO>> getAdminById(@PathVariable Integer id) {
                 Admin admin = adminService.findById(id);
                 AdminDTO adminDTO = adminMapper.toDTO(admin);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "fetched")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.ok()
-                                .location(location)
-                                .body(adminDTO);
+                EntityModel<AdminDTO> resource = EntityModel.of(adminDTO,
+                                linkTo(methodOn(AdminController.class).getAdminById(id)).withSelfRel(),
+                                linkTo(methodOn(AdminController.class).updateAdmin(id, null)).withRel("update"),
+                                linkTo(methodOn(AdminController.class).deleteAdmin(id)).withRel("delete"));
+
+                return ResponseEntity.ok(resource);
         }
 
         @PutMapping("/{id}")
         @Operation(summary = "Actualizar un admin", description = "Modifica los datos de un administrador existente.")
-        public ResponseEntity<AdminDTO> updateAdmin(@PathVariable Integer id, @RequestBody AdminDTO adminDTO) {
+        public ResponseEntity<EntityModel<AdminDTO>> updateAdmin(@PathVariable Integer id,
+                        @RequestBody AdminDTO adminDTO) {
                 Admin admin = adminMapper.toEntity(adminDTO);
                 Admin updatedAdmin = adminService.update(admin, id);
                 AdminDTO updatedAdminDTO = adminMapper.toDTO(updatedAdmin);
 
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "updated")
-                                .buildAndExpand(id)
-                                .toUri();
+                EntityModel<AdminDTO> resource = EntityModel.of(updatedAdminDTO,
+                                linkTo(methodOn(AdminController.class).getAdminById(id)).withSelfRel(),
+                                linkTo(methodOn(AdminController.class).deleteAdmin(id)).withRel("delete"));
 
-                return ResponseEntity.ok()
-                                .location(location)
-                                .body(updatedAdminDTO);
+                return ResponseEntity.ok(resource);
         }
 
         @DeleteMapping("/{id}")
@@ -96,15 +92,7 @@ public class AdminController {
         @ApiResponse(responseCode = "204", description = "Admin eliminado exitosamente")
         public ResponseEntity<Void> deleteAdmin(@PathVariable Integer id) {
                 adminService.delete(id);
-                URI location = ServletUriComponentsBuilder
-                                .fromCurrentRequest()
-                                .path("/{id}")
-                                .queryParam("status", "deleted")
-                                .buildAndExpand(id)
-                                .toUri();
-                return ResponseEntity.noContent()
-                                .location(location)
-                                .build();
+                return ResponseEntity.noContent().build();
         }
 
         @GetMapping
@@ -116,8 +104,8 @@ public class AdminController {
                                 .map(admin -> {
                                         AdminDTO dto = adminMapper.toDTO(admin);
                                         EntityModel<AdminDTO> model = EntityModel.of(dto);
-                                        model.add(WebMvcLinkBuilder.linkTo(
-                                                        WebMvcLinkBuilder.methodOn(AdminController.class)
+                                        model.add(linkTo(
+                                                        methodOn(AdminController.class)
                                                                         .getAdminById(dto.getId()))
                                                         .withSelfRel());
                                         return model;
@@ -125,8 +113,8 @@ public class AdminController {
                                 .collect(Collectors.toList());
 
                 CollectionModel<EntityModel<AdminDTO>> collectionModel = CollectionModel.of(adminResources,
-                                WebMvcLinkBuilder.linkTo(
-                                                WebMvcLinkBuilder.methodOn(AdminController.class).getAllAdmins())
+                                linkTo(
+                                                methodOn(AdminController.class).getAllAdmins())
                                                 .withSelfRel());
 
                 return ResponseEntity.ok(collectionModel);
