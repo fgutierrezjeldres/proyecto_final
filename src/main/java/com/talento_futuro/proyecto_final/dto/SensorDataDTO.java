@@ -11,27 +11,27 @@ import lombok.Data;
 
 @Data
 public class SensorDataDTO {
-	
-	private Integer id;
-    @NotBlank(message = "Los datos no pueden estar vacíos")
+
+    private Integer id;
+
+    @NotBlank(message = "Data cannot be empty")
     private String data;
 
-    @NotBlank(message = "La métrica no puede estar vacía")
+    @NotBlank(message = "Metric cannot be empty")
     private String metric;
 
-    @NotNull(message = "La fecha de recepción no puede ser nula")
-    @Positive(message = "La fecha de recepción debe ser un valor positivo")
+    @NotNull(message = "Received date cannot be null")
+    @Positive(message = "Received date must be a positive value")
     private Long receivedAt;
 
-    @NotNull(message = "El ID del sensor no puede ser nulo")
+    @NotNull(message = "Sensor ID cannot be null")
     private Integer sensorId;
 
     public String getReceivedAtFormatted() {
-        return (receivedAt != null) ? 
-            Instant.ofEpochMilli(receivedAt)
-                   .atOffset(ZoneOffset.UTC)
-                   .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME) 
-            : null;
+        return (receivedAt != null) ? Instant.ofEpochMilli(receivedAt)
+                .atOffset(ZoneOffset.UTC)
+                .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+                : null;
     }
 
 }

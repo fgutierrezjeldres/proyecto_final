@@ -16,21 +16,22 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class AdminServiceImpl extends CRUDServiceImpl<Admin, Integer> implements IAdminService{
+public class AdminServiceImpl extends CRUDServiceImpl<Admin, Integer> implements IAdminService {
 
     private final IAdminRepository repository;
     private final PasswordEncoder encoder;
     private final AdminMapper adminMapper;
-    
+
     @Override
     protected IGenericRepository<Admin, Integer> getRepository() {
         return repository;
     }
+
     @Override
     @Transactional
-    public AdminDTO  registerAdmin(AdminDTO adminDTO) {
+    public AdminDTO registerAdmin(AdminDTO adminDTO) {
         Admin admin = adminMapper.toEntity(adminDTO);
-        admin.setPassword(encoder.encode(admin.getPassword())); 
+        admin.setPassword(encoder.encode(admin.getPassword()));
         Admin savedAdmin = save(admin);
         return adminMapper.toDTO(savedAdmin);
     }
@@ -42,6 +43,14 @@ public class AdminServiceImpl extends CRUDServiceImpl<Admin, Integer> implements
         return encoder.matches(password, admin.getPassword());
     }
 
-
+    @Override
+    public AdminDTO updateAdmin(Integer id, AdminDTO adminDTO) {
+        Admin admin = repository.findById(id)
+                .orElseThrow(() -> new UsernameNotFoundException("User Not Found"));
+        admin.setPassword(adminDTO.getPassword());
+        admin.setUsername(adminDTO.getUsername());
+        Admin updatedAdmin = update(admin, id);
+        return adminMapper.toDTO(updatedAdmin);
+    }
 
 }

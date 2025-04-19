@@ -82,9 +82,7 @@ public class SensorDataController {
         @ApiResponse(responseCode = "200", description = "Dato actualizado exitosamente")
         public ResponseEntity<EntityModel<SensorDataDTO>> updateSensorData(@PathVariable Integer id,
                         @RequestBody SensorDataDTO dto) {
-                SensorData updated = sensorDataService.update(sensorDataMapper.toEntity(dto), id);
-                SensorDataDTO updatedDTO = sensorDataMapper.toDTO(updated);
-
+                SensorDataDTO updatedDTO = sensorDataService.updateSensorData(dto, id);
                 EntityModel<SensorDataDTO> resource = EntityModel.of(updatedDTO,
                                 linkTo(methodOn(SensorDataController.class).getSensorDataById(id)).withSelfRel(),
                                 linkTo(methodOn(SensorDataController.class).deleteSensorData(id)).withRel("delete"));

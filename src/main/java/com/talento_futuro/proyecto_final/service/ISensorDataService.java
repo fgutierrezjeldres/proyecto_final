@@ -9,7 +9,7 @@ import com.talento_futuro.proyecto_final.entity.SensorData;
 public interface ISensorDataService extends ICRUDService<SensorData, Integer>{
 
     List<SensorDataDTO>  registerSensorData(JsonNode jsonNode);
-    boolean isValidSensorApiKey(String sensorApiKey);
+    SensorDataDTO updateSensorData(SensorDataDTO sensorDataDTO, Integer id);
     List<SensorData> findFilteredData(String companyApiKey, Long from, Long to, List<Integer> sensorIds);
 
 }

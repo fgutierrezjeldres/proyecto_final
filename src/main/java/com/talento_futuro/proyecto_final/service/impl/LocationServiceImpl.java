@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
-public class LocationServiceImpl extends CRUDServiceImpl<Location, Integer> implements ILocationService{
+public class LocationServiceImpl extends CRUDServiceImpl<Location, Integer> implements ILocationService {
 
     private final ILocationRepository repository;
     private final LocationMapper locationMapper;
@@ -30,14 +30,18 @@ public class LocationServiceImpl extends CRUDServiceImpl<Location, Integer> impl
     @Override
     @Transactional
     public LocationDTO updateLocation(LocationDTO locationDTO, Integer id) {
-        
+
         Location existingLocation = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Location not found"));
         Company company = companyRepository.findById(locationDTO.getCompanyId())
                 .orElseThrow(() -> new RuntimeException("Company not found"));
-        Location location = locationMapper.toEntity(locationDTO, company);
-        location.setId(existingLocation.getId());
-        Location updatedLocation = repository.save(location);
+        existingLocation.setLocationName(locationDTO.getLocationName());
+        existingLocation.setLocationCountry(locationDTO.getLocationCountry());
+        existingLocation.setLocationCity(locationDTO.getLocationCity());
+        existingLocation.setLocationMeta(locationDTO.getLocationMeta());
+        existingLocation.setCompany(company);
+        Location updatedLocation = update(existingLocation, id);
+
         return locationMapper.toDTO(updatedLocation);
     }
 
@@ -46,12 +50,10 @@ public class LocationServiceImpl extends CRUDServiceImpl<Location, Integer> impl
     public LocationDTO registerLocation(LocationDTO locationDTO) {
 
         Company company = companyRepository.findById(locationDTO.getCompanyId())
-            .orElseThrow(() -> new RuntimeException("Company not found"));
+                .orElseThrow(() -> new RuntimeException("Company not found"));
         Location location = locationMapper.toEntity(locationDTO, company);
         Location savedLocation = repository.save(location);
         return locationMapper.toDTO(savedLocation);
     }
-
-
 
 }

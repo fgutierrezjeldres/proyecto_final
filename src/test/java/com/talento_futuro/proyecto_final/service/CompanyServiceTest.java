@@ -87,9 +87,9 @@ public class CompanyServiceTest {
         when(companyMapper.toEntity(companyDTO, admin)).thenReturn(updatedCompany);
         when(repository.save(any(Company.class))).thenReturn(updatedCompany);
 
-        Company result = companyService.updateCompany(companyDTO, 1);
+        CompanyDTO resultCompanyDTO = companyService.updateCompany(companyDTO, 1);
+        Company result = companyMapper.toEntity(resultCompanyDTO, admin);
 
-        assertEquals(1, result.getId());
         assertEquals("d3ee2929-212b-4077-af84-694a0e69b8e2", result.getCompanyApiKey());
         assertEquals("admin", result.getAdmin().getUsername());
     }

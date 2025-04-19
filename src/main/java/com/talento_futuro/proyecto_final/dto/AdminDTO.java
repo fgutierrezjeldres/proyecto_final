@@ -9,13 +9,13 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class AdminDTO {
-	
+
 	private Integer id;
-	
-	@NotBlank(message = "El nombre de usuario no puede estar vacío")
+
+	@NotBlank(message = "Username cannot be empty")
 	private String username;
 
-	@NotBlank(message = "La contraseña no puede estar vacía")
+	@NotBlank(message = "Password cannot be empty")
 	private String password;
 
 }

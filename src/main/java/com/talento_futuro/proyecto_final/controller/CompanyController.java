@@ -80,9 +80,7 @@ public class CompanyController {
         @ApiResponse(responseCode = "200", description = "Compañía actualizada exitosamente")
         public ResponseEntity<EntityModel<CompanyDTO>> updateCompany(@PathVariable Integer id,
                         @RequestBody CompanyDTO companyDTO) {
-                Company updatedCompany = companyService.updateCompany(companyDTO, id);
-                CompanyDTO updatedCompanyDTO = companyMapper.toDTO(updatedCompany);
-
+                CompanyDTO updatedCompanyDTO = companyService.updateCompany(companyDTO, id);
                 EntityModel<CompanyDTO> resource = EntityModel.of(updatedCompanyDTO,
                                 linkTo(methodOn(CompanyController.class).getCompanyById(id)).withSelfRel(),
                                 linkTo(methodOn(CompanyController.class).deleteCompany(id)).withRel("delete"));

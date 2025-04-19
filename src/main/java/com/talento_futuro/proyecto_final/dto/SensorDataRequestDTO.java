@@ -6,7 +6,8 @@ import lombok.Data;
 
 @Data
 public class SensorDataRequestDTO {
-    private String apiKey;
+    
+    private String sensorApiKey;
     private List<SensorDataDTO> data;
 
 }

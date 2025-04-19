@@ -18,58 +18,59 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 @RestControllerAdvice
 public class ResponseExceptionHandler extends ResponseEntityExceptionHandler {
 
-    // Validación de campos (@Valid fallida)
-    @Override
-    protected ResponseEntity<Object> handleMethodArgumentNotValid(
-            MethodArgumentNotValidException ex,
-            HttpHeaders headers,
-            HttpStatusCode status,
-            WebRequest request) {
+        //@Valid erroneo 
+        @Override
+        protected ResponseEntity<Object> handleMethodArgumentNotValid(
+                        MethodArgumentNotValidException ex,
+                        HttpHeaders headers,
+                        HttpStatusCode status,
+                        WebRequest request) {
 
-        List<String> errores = ex.getBindingResult()
-                .getAllErrors()
-                .stream()
-                .map(DefaultMessageSourceResolvable::getDefaultMessage)
-                .toList();
+                List<String> errors = ex.getBindingResult()
+                                .getAllErrors()
+                                .stream()
+                                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                                .toList();
 
-        ErrorResponse errorResponse = ErrorResponse.builder(ex, HttpStatus.BAD_REQUEST, "Error de validación")
-                .title("Validación fallida")
-                .type(URI.create(request.getDescription(false)))
-                .property("errores", errores)
-                .build();
+                ErrorResponse errorResponse = ErrorResponse.builder(ex, HttpStatus.BAD_REQUEST, "Validation error")
+                                .title("Validation failed")
+                                .type(URI.create(request.getDescription(false)))
+                                .property("errors", errors)
+                                .build();
 
-        return ResponseEntity.badRequest().body(errorResponse);
-    }
+                return ResponseEntity.badRequest().body(errorResponse);
+        }
 
-    // Modelo no encontrado
-    @ExceptionHandler(ModelNotFoundException.class)
-    public ErrorResponse handleModelNotFoundException(ModelNotFoundException ex, WebRequest request) {
-        return ErrorResponse.builder(ex, HttpStatus.NOT_FOUND, ex.getMessage())
-                .title("Recurso no encontrado")
-                .type(URI.create(request.getDescription(false)))
-                .property("codigo_error", "modelo_no_encontrado")
-                .build();
-    }
+        // Modelo no encontrado
+        @ExceptionHandler(ModelNotFoundException.class)
+        public ErrorResponse handleModelNotFoundException(ModelNotFoundException ex, WebRequest request) {
+                return ErrorResponse.builder(ex, HttpStatus.NOT_FOUND, ex.getMessage())
+                                .title("Resource not found")
+                                .type(URI.create(request.getDescription(false)))
+                                .property("error_code", "model_not_found")
+                                .build();
+        }
 
-    // Acceso no autorizado
-    @ExceptionHandler(UnauthorizedException.class)
-    public ErrorResponse handleUnauthorizedException(UnauthorizedException ex, WebRequest request) {
-        return ErrorResponse.builder(ex, HttpStatus.UNAUTHORIZED, ex.getMessage())
-                .title("Acceso no autorizado")
-                .type(URI.create(request.getDescription(false)))
-                .property("codigo_error", "acceso_denegado")
-                .build();
-    }
+        // Acceso no autorizado
+        @ExceptionHandler(UnauthorizedException.class)
+        public ErrorResponse handleUnauthorizedException(UnauthorizedException ex, WebRequest request) {
+                return ErrorResponse.builder(ex, HttpStatus.UNAUTHORIZED, ex.getMessage())
+                                .title("Unauthorized access")
+                                .type(URI.create(request.getDescription(false)))
+                                .property("error_code", "access_denied")
+                                .build();
+        }
 
-    // Excepción general (por si algo se escapa)
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = ErrorResponse.builder(ex, HttpStatus.INTERNAL_SERVER_ERROR, "Error inesperado")
-                .title("Error del servidor")
-                .type(URI.create(request.getDescription(false)))
-                .property("detalle", ex.getMessage())
-                .build();
+        // Excepcion general (error no controlado)
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<Object> handleAllExceptions(Exception ex, WebRequest request) {
+                ErrorResponse errorResponse = ErrorResponse
+                                .builder(ex, HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error")
+                                .title("Server error")
+                                .type(URI.create(request.getDescription(false)))
+                                .property("detail", ex.getMessage())
+                                .build();
 
-        return ResponseEntity.internalServerError().body(errorResponse);
-    }
+                return ResponseEntity.internalServerError().body(errorResponse);
+        }
 }

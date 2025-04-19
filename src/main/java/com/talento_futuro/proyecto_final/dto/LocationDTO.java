@@ -9,19 +9,19 @@ public class LocationDTO {
 
 	private Integer id;
 
-	@NotBlank(message = "El nombre de la ubicación no puede estar vacío")
+	@NotBlank(message = "Location name cannot be empty")
 	private String locationName;
 
-	@NotBlank(message = "El país de la ubicación no puede estar vacío")
+	@NotBlank(message = "Location country cannot be empty")
 	private String locationCountry;
 
-	@NotBlank(message = "La ciudad de la ubicación no puede estar vacía")
+	@NotBlank(message = "Location city cannot be empty")
 	private String locationCity;
 
-	@NotBlank(message = "La metadata de la ubicación no puede estar vacía")
+	@NotBlank(message = "Location metadata cannot be empty")
 	private String locationMeta;
 
-	@NotNull(message = "El ID de la compañía no puede ser nulo")
+	@NotNull(message = "Company ID cannot be null")
 	private Integer companyId;
 
 }

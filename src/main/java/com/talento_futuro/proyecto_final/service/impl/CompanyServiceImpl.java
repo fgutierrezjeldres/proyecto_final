@@ -26,7 +26,7 @@ public class CompanyServiceImpl extends CRUDServiceImpl<Company, Integer> implem
     @Override
     protected IGenericRepository<Company, Integer> getRepository() {
         return repository;
-        
+
     }
 
     @Override
@@ -35,24 +35,26 @@ public class CompanyServiceImpl extends CRUDServiceImpl<Company, Integer> implem
 
         Admin admin = adminRepository.findById(companyDTO.getAdminId())
                 .orElseThrow(() -> new ModelNotFoundException("Admin not found"));
-        
+
         Company company = companyMapper.toEntity(companyDTO, admin);
-        Company  savedCompany = save(company);
+        Company savedCompany = save(company);
         return companyMapper.toDTO(savedCompany);
     }
 
     @Override
     @Transactional
-    public Company updateCompany(CompanyDTO companyDTO, Integer id) {
+    public CompanyDTO updateCompany(CompanyDTO companyDTO, Integer id) {
         Company existingCompany = repository.findById(id)
-        .orElseThrow(() -> new ModelNotFoundException("Company not found"));
+                .orElseThrow(() -> new ModelNotFoundException("Company not found"));
         Admin admin = adminRepository.findById(companyDTO.getAdminId())
                 .orElseThrow(() -> new ModelNotFoundException("Admin not found"));
-        Company updatedCompany = companyMapper.toEntity(companyDTO, admin);
-        updatedCompany.setId(existingCompany.getId());
-        updatedCompany.setCompanyApiKey(existingCompany.getCompanyApiKey());
 
-        return repository.save(updatedCompany);
+        Company company = companyMapper.toEntity(companyDTO, admin);
+        company.setId(existingCompany.getId());
+        company.setCompanyApiKey(existingCompany.getCompanyApiKey());
+        Company updatedCompany = update(company, id);
+        CompanyDTO updatedCompanyDTO = companyMapper.toDTO(updatedCompany);
+        return updatedCompanyDTO;
     }
 
 }

@@ -77,10 +77,7 @@ public class AdminController {
         @Operation(summary = "Actualizar un admin", description = "Modifica los datos de un administrador existente.")
         public ResponseEntity<EntityModel<AdminDTO>> updateAdmin(@PathVariable Integer id,
                         @RequestBody AdminDTO adminDTO) {
-                Admin admin = adminMapper.toEntity(adminDTO);
-                Admin updatedAdmin = adminService.update(admin, id);
-                AdminDTO updatedAdminDTO = adminMapper.toDTO(updatedAdmin);
-
+                AdminDTO updatedAdminDTO = adminService.updateAdmin(id, adminDTO);
                 EntityModel<AdminDTO> resource = EntityModel.of(updatedAdminDTO,
                                 linkTo(methodOn(AdminController.class).getAdminById(id)).withSelfRel(),
                                 linkTo(methodOn(AdminController.class).deleteAdmin(id)).withRel("delete"));
