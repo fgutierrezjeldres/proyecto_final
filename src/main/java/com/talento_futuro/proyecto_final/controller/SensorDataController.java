@@ -130,7 +130,7 @@ public class SensorDataController {
                                 .body(collectionModel);
         }
 
-        @GetMapping("/all")
+        @GetMapping("/filter")
         @Operation(summary = "Filtrar datos de sensores", description = "Filtra los datos por rango de tiempo y lista de sensores. La API key de la compañía puede enviarse por header o query param.")
         @ApiResponse(responseCode = "200", description = "Datos filtrados correctamente")
         @ApiResponse(responseCode = "401", description = "API Key no proporcionada")
