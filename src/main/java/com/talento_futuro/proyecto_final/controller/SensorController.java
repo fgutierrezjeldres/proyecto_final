@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
 
@@ -96,13 +97,8 @@ public class SensorController {
         @GetMapping
         @Operation(summary = "Listar todos los sensores", description = "Obtiene una lista de todos los sensores registrados.")
         @ApiResponse(responseCode = "200", description = "Lista de sensores obtenida exitosamente")
-        public ResponseEntity<CollectionModel<EntityModel<SensorDTO>>> getAllSensors() {
-                List<Sensor> sensors = sensorService.findAll();
-                List<SensorDTO> sensorDTOs = sensors.stream()
-                                .map(sensorMapper::toDTO)
-                                .collect(Collectors.toList());
-
-                // Crear CollectionModel para los sensores
+        public ResponseEntity<CollectionModel<EntityModel<SensorDTO>>> getAllSensors(@RequestParam(required = false) Integer limit) {
+                List<SensorDTO> sensorDTOs = sensorService.getAllSensors(limit);
                 List<EntityModel<SensorDTO>> resources = sensorDTOs.stream()
                                 .map(sensorDTO -> {
                                         EntityModel<SensorDTO> resource = EntityModel.of(sensorDTO);

@@ -1,18 +1,24 @@
 package com.talento_futuro.proyecto_final.service.impl;
 
+import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.talento_futuro.proyecto_final.dto.SensorDTO;
+import com.talento_futuro.proyecto_final.mapper.SensorDataMapper;
 import com.talento_futuro.proyecto_final.mapper.SensorMapper;
 import com.talento_futuro.proyecto_final.entity.Company;
 import com.talento_futuro.proyecto_final.entity.Location;
 import com.talento_futuro.proyecto_final.entity.Sensor;
+import com.talento_futuro.proyecto_final.entity.SensorData;
 import com.talento_futuro.proyecto_final.repository.ICompanyRepository;
 import com.talento_futuro.proyecto_final.repository.IGenericRepository;
 import com.talento_futuro.proyecto_final.repository.ILocationRepository;
+import com.talento_futuro.proyecto_final.repository.ISensorDataRepository;
 import com.talento_futuro.proyecto_final.repository.ISensorRepository;
 import com.talento_futuro.proyecto_final.service.ISensorService;
 
@@ -24,8 +30,10 @@ public class SensorServiceImpl extends CRUDServiceImpl<Sensor, Integer> implemen
 
     private final ISensorRepository repository;
     private final SensorMapper sensorMapper;
+    private final SensorDataMapper sensorDataMapper;
     private final ILocationRepository locationRepository;
     private final ICompanyRepository companyRepository;
+    private final ISensorDataRepository sensorDataRepository;
 
     @Override
     protected IGenericRepository<Sensor, Integer> getRepository() {
@@ -74,6 +82,31 @@ public class SensorServiceImpl extends CRUDServiceImpl<Sensor, Integer> implemen
         existingSensor.setLocation(location);
         Sensor savedSensor = repository.save(existingSensor);
         return sensorMapper.toDTO(savedSensor);
+    }
+
+    @Override
+    public List<SensorDTO> getAllSensors(Integer  limit) {
+    List<Sensor> sensors = repository.findAll();
+    return sensors.stream()
+        .map(sensor -> {
+            SensorDTO dto = sensorMapper.toDTO(sensor);
+
+            List<SensorData> sensorDataList;
+
+            if (limit != null && limit > 0) {
+                sensorDataList = sensorDataRepository.findBySensorIdOrderByReceivedAtDesc(
+                    sensor.getId(), PageRequest.of(0, limit));
+            } else {
+                sensorDataList = sensorDataRepository.findBySensorIdOrderByReceivedAtDesc(sensor.getId());
+            }
+            dto.setSensorData(sensorDataList.stream()
+                .map(sensorDataMapper::toDTO)
+                .collect(Collectors.toList()));
+
+            return dto;
+        })
+        .collect(Collectors.toList());
+        
     }
 
 }
